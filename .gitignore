@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Ignore Results
+/results/
+
+#Ignore UCR
+/UCRArchive_2018/
