@@ -119,9 +119,9 @@ class Classifier_LSTMFCN:
             model.load_weights(self.output_dir + 'best_curr_weights.hdf5')
             print("Weights loaded from {0}best_curr_weights.hdf5".format(self.output_dir))
 
-            #Tune based on minimum train loss
+            #Best model loaded, now evaluate on train set (No overfitting for test set)
             model_loss, model_acc = model.evaluate(x_train, y_train, batch_size=batch_size, verbose=False)
-            print('Best weights --> minimum train loss: {0}, corresponding train acc: {1}'.format(model_loss, model_acc))
+            print('Best weights --> train loss: {0}, train acc: {1}'.format(model_loss, model_acc))
             
             model.save(self.output_dir + 'last_model.hdf5')
 

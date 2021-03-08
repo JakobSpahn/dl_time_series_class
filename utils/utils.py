@@ -6,7 +6,7 @@ import sktime
 #from sktime.utils.data_container import from_nested_to_2d_array
 
 #If sktime >= 0.5.3.
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
+from sktime.utils.data_io import load_from_tsfile_to_dataframe, load_from_arff_to_dataframe
 from sktime.utils.data_processing import from_nested_to_2d_array 
 
 import numpy as np
@@ -42,6 +42,11 @@ def read_dataset(root_dir, dataset_name):
 
     x_train, y_train = load_from_tsfile_to_dataframe(root_dir_dataset + '/'+ dataset_name + '/' + dataset_name + '_TRAIN.ts')
     x_test, y_test = load_from_tsfile_to_dataframe(root_dir_dataset + '/'+ dataset_name + '/' + dataset_name + '_TEST.ts')
+
+    #x_train, y_train = load_from_arff_to_dataframe(root_dir_dataset + '/'+ dataset_name + '/' + dataset_name + '_TRAIN.arff')
+    #x_test, y_test = load_from_arff_to_dataframe(root_dir_dataset + '/'+ dataset_name + '/' + dataset_name + '_TEST.arff')
+
+    #print(x_train)
 
     x_train = from_nested_to_2d_array(x_train, return_numpy=True)
     x_test = from_nested_to_2d_array(x_test, return_numpy=True)
