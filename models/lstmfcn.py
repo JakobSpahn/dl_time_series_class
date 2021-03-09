@@ -101,7 +101,7 @@ class Classifier_LSTMFCN:
         batch_size = self.batch_size
         nb_epochs = self.nb_epochs
 
-        curr_loss = 1e10
+        curr_acc = 0
         final_model = None
         final_hist = None
         final_cell = None
@@ -142,9 +142,10 @@ class Classifier_LSTMFCN:
             df_metrics.to_csv(temp_output_dir + 'df_metrics.csv', index=False)
             model.save(temp_output_dir+ 'model.hdf5')
 
-            if(model_loss < curr_loss):
+            if(model_acc > curr_acc):
+                curr_acc = model_acc
                 final_cell = cell
-                curr_loss = model_loss
+                #curr_loss = model_loss
                 final_model = model
                 final_hist = hist
                 final_dur = duration
