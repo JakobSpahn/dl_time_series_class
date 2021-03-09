@@ -2,8 +2,13 @@ import tensorflow.keras as keras
 import tensorflow as tf
 import numpy as np
 import time
+import pandas
+
+from sklearn.model_selection import train_test_split
 
 from utils.utils import save_logs
+from utils.utils import calculate_metrics
+from utils.utils import create_directory
 
 import matplotlib
 
@@ -92,7 +97,7 @@ class Classifier_LSTMFCN:
         
         return model
     
-    def train(self, x_train, y_train, x_val, y_val):
+    def train(self):
         batch_size = self.batch_size
         nb_epochs = self.nb_epochs
 
@@ -102,9 +107,8 @@ class Classifier_LSTMFCN:
         final_cell = None
         final_dur = None
 
-        input_shape = x_train.shape[1:]
+        input_shape = self.x_train.shape[1:]
 
-        start_time = time.time()
 
         for cell in self.lstm_cells:
             model = self.build_model(input_shape, self.nb_classes, cell)
@@ -112,43 +116,64 @@ class Classifier_LSTMFCN:
             if self.verbose:
                 model.summary()
 
-            hist = model.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epochs,
-            verbose=False, validation_data=(x_val,y_val), callbacks=self.callbacks)
+            start_time = time.time()
+
+            hist = model.fit(self.x_train, self.y_train, batch_size=batch_size, epochs=nb_epochs,
+            verbose=False, validation_data=(self.x_val,self.y_val), callbacks=self.callbacks)
             
             model.load_weights(self.output_dir + 'best_curr_weights.hdf5')
             print("Weights loaded from {0}best_curr_weights.hdf5".format(self.output_dir))
 
             #Best model loaded, now evaluate on train set (No overfitting for test set)
-            model_loss, model_acc = model.evaluate(x_train, y_train, batch_size=batch_size, verbose=False)
-            print('Best weights --> train loss: {0}, train acc: {1}'.format(model_loss, model_acc))
+            model_loss, model_acc = model.evaluate(self.x_val, self.y_val, batch_size=batch_size, verbose=False)
+            print('Best weights --> val loss: {0}, val acc: {1}'.format(model_loss, model_acc))
+
+            duration = time.time() - start_time
             
-            model.save(self.output_dir + 'last_model.hdf5')
+            
+            y_pred = model.predict(self.x_test)
+            # convert the predicted from binary to integer
+            y_pred = np.argmax(y_pred , axis=1)
+            df_metrics = calculate_metrics(self.y_true,y_pred,duration)
+
+            temp_output_dir = self.output_dir+'num_cells_'+str(cell)+'/'
+            create_directory(temp_output_dir)
+            
+            df_metrics.to_csv(temp_output_dir + 'df_metrics.csv', index=False)
+            model.save(temp_output_dir+ 'model.hdf5')
 
             if(model_loss < curr_loss):
                 final_cell = cell
                 curr_loss = model_loss
                 final_model = model
                 final_hist = hist
+                final_dur = duration
                 final_model.save(self.output_dir + 'best_model.hdf5')
 
             keras.backend.clear_session()
 
-        duration = time.time() - start_time
+        
 
         print('Final Cell Selected:',final_cell)
         file_cells = open(self.output_dir + 'best_num_cells.txt','w')
         file_cells.write(str(final_cell))
 
-        return final_model, final_hist, duration
+        return final_model, final_hist, final_dur
 
-    def fit(self, x_train, y_train, x_val, y_val,y_true):
+    def fit(self, x_train, y_train, x_test, y_test,y_true):
         if not tf.test.is_gpu_available:
             print('error')
             exit()
         
-        x_train = x_train.reshape(x_train.shape[0],1,x_train.shape[1])
-        x_val = np.reshape(x_val,(x_val.shape[0],1,x_val.shape[1]))
-        print('x_train.shape: {0}'.format(x_train.shape))
+        self.x_train = x_train.reshape(x_train.shape[0],1,x_train.shape[1])
+        self.x_test = np.reshape(x_test,(x_test.shape[0],1,x_test.shape[1]))
+        self.y_train = y_train
+        self.y_test = x_test
+        self.y_true = y_true
+
+        # split train to validation set to choose best hyper parameters 
+        self.x_train, self.x_val, self.y_train,self.y_val = train_test_split(self.x_train,self.y_train, test_size=0.2)
+        print('x_train.shape: {0}'.format(self.x_train.shape))
         
         # x_val and y_val are only used to monitor the test loss and NOT for training
         self.batch_size = 128
@@ -156,15 +181,12 @@ class Classifier_LSTMFCN:
         #self.batch_size = mini_batch_size
         self.nb_epochs = 2000
 
-        self.model, hist, duration = self.train(x_train, y_train, x_val, y_val)
+        self.model, hist, duration = self.train()
 
-        #self.model.save(self.output_dir + 'last_model.hdf5')
-
-        #model = keras.models.load_model(self.output_dir+'best_model.hdf5')
-
-        y_pred = self.model.predict(x_val)
+        #Finally predict on test
+        y_pred = self.model.predict(self.x_test)
 
         # convert the predicted from binary to integer
         y_pred = np.argmax(y_pred , axis=1)
 
-        save_logs(self.output_dir, hist, y_pred, y_true, duration, self.verbose)
+        save_logs(self.output_dir, hist, y_pred, self.y_true, duration, self.verbose)
