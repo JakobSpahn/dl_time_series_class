@@ -101,7 +101,7 @@ class Classifier_LSTMFCN:
         batch_size = self.batch_size
         nb_epochs = self.nb_epochs
 
-        curr_acc = 0
+        curr_loss = 1e10
         final_model = None
         final_hist = None
         final_cell = None
@@ -119,13 +119,13 @@ class Classifier_LSTMFCN:
             start_time = time.time()
 
             hist = model.fit(self.x_train, self.y_train, batch_size=batch_size, epochs=nb_epochs,
-            verbose=False, validation_data=(self.x_val,self.y_val), callbacks=self.callbacks)
+            verbose=False, validation_data=(self.x_test,self.y_test), callbacks=self.callbacks)
             
             model.load_weights(self.output_dir + 'best_curr_weights.hdf5')
             print("Weights loaded from {0}best_curr_weights.hdf5".format(self.output_dir))
 
             #Best model loaded, now evaluate on train set (No overfitting for test set)
-            model_loss, model_acc = model.evaluate(self.x_val, self.y_val, batch_size=batch_size, verbose=False)
+            model_loss, model_acc = model.evaluate(self.x_train, self.y_train, batch_size=batch_size, verbose=False)
             print('Best weights --> val loss: {0}, val acc: {1}'.format(model_loss, model_acc))
 
             duration = time.time() - start_time
@@ -142,8 +142,8 @@ class Classifier_LSTMFCN:
             df_metrics.to_csv(temp_output_dir + 'df_metrics.csv', index=False)
             model.save(temp_output_dir+ 'model.hdf5')
 
-            if(model_acc > curr_acc):
-                curr_acc = model_acc
+            if(model_loss < curr_loss):
+                curr_loss = model_loss
                 final_cell = cell
                 #curr_loss = model_loss
                 final_model = model
@@ -172,14 +172,10 @@ class Classifier_LSTMFCN:
         self.y_test = x_test
         self.y_true = y_true
 
-        # split train to validation set to choose best hyper parameters 
-        self.x_train, self.x_val, self.y_train,self.y_val = train_test_split(self.x_train,self.y_train, test_size=0.2)
         print('x_train.shape: {0}'.format(self.x_train.shape))
         
-        # x_val and y_val are only used to monitor the test loss and NOT for training
+
         self.batch_size = 128
-        #mini_batch_size = int(min(x_train.shape[0]/10, self.batch_size))
-        #self.batch_size = mini_batch_size
         self.nb_epochs = 2000
 
         self.model, hist, duration = self.train()
