@@ -104,17 +104,16 @@ class Classifier_LSTMFCN:
 
         input_shape = x_train.shape[1:]
 
+        start_time = time.time()
+
         for cell in self.lstm_cells:
             model = self.build_model(input_shape, self.nb_classes, cell)
 
-            model.summary()
-
-            start_time = time.time()
+            if self.verbose:
+                model.summary()
 
             hist = model.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epochs,
             verbose=False, validation_data=(x_val,y_val), callbacks=self.callbacks)
-
-            duration = time.time() - start_time
             
             model.load_weights(self.output_dir + 'best_curr_weights.hdf5')
             print("Weights loaded from {0}best_curr_weights.hdf5".format(self.output_dir))
@@ -130,16 +129,17 @@ class Classifier_LSTMFCN:
                 curr_loss = model_loss
                 final_model = model
                 final_hist = hist
-                final_dur = duration
                 final_model.save(self.output_dir + 'best_model.hdf5')
 
             keras.backend.clear_session()
+
+        duration = time.time() - start_time
 
         print('Final Cell Selected:',final_cell)
         file_cells = open(self.output_dir + 'best_num_cells.txt','w')
         file_cells.write(str(final_cell))
 
-        return final_model, final_hist, final_dur
+        return final_model, final_hist, duration
 
     def fit(self, x_train, y_train, x_val, y_val,y_true):
         if not tf.test.is_gpu_available:

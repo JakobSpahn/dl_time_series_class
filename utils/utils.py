@@ -123,8 +123,8 @@ def plot_epochs_metric(hist, file_name, verbose, metric='loss'):
     plt.legend(['train', 'val'], loc='upper left')
     plt.savefig(file_name, bbox_inches='tight')
 
-    if(verbose):
-        plt.show()
+    #if(verbose):
+        #plt.show()
 
     plt.close()
 

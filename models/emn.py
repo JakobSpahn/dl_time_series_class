@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 import time
 
+import pandas as pd
+
 from layers.reservoir import Reservoir
 
 from utils.utils import save_logs
@@ -22,7 +24,7 @@ class Classifier_EMN:
 
         self.units = 32
         self.spectral = 0.9
-        self.IS = [0.1,1]
+        self.input_scaling = [0.1,1]
         self.connectivity = [0.3,0.7]
         self.leaky = 1
 
@@ -31,6 +33,8 @@ class Classifier_EMN:
         self.epoch = 500
         self.batch = 25
         self.ratio = [[0.1,0.2],[0.2,0.3],[0.3,0.4],[0.4,0.5],[0.5,0.6],[0.6,0.7],[0.7,0.8]]
+
+        self.final_params_selected = []
         
         
     def build_model(self, input_shape, nb_classes, len_series, ratio):
@@ -65,6 +69,10 @@ class Classifier_EMN:
         
         model.compile(loss='categorical_crossentropy', optimizer = tf.keras.optimizers.Adam(learning_rate=0.001), metrics=['accuracy'])
         
+        #factor = 1. / np.cbrt(2)
+		
+        #reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=factor, patience=100, min_lr=1e-4, cooldown=0, mode='auto')
+
         self.callbacks = [TqdmCallback(verbose=0)]
         
         
@@ -87,13 +95,13 @@ class Classifier_EMN:
         
         return train_data, train_labels      
     
-    def ff_esn(self, x_train, x_val, y_train, IS, connect):
+    def ff_esn(self, x_train, x_val, y_train, input_scaling, connect):
         units = self.units
         spectral_radius = self.spectral
         leaky = self.leaky
         n_in = 1
         
-        escnn = Reservoir(units, n_in, IS, spectral_radius, connect, leaky)
+        escnn = Reservoir(units, n_in, input_scaling, spectral_radius, connect, leaky)
         x_train = escnn.set_weights(x_train)
         x_val = escnn.set_weights(x_val)
 
@@ -113,8 +121,8 @@ class Classifier_EMN:
         return x_train, x_val, y_train
 
     def tune_esn(self, x_train_init, x_val_init, y_train_init, y_val):
-        final_IS = None
-        final_connect = None
+        input_scaling_final = None
+        connect_final = None
         x_train_final = None
         x_val_final = None
         y_train_final = None 
@@ -124,11 +132,11 @@ class Classifier_EMN:
 
         current_acc = 0.0
 
-        for IS in self.IS:
+        for input_scaling in self.input_scaling:
             for connect in self.connectivity:
                 ratio = [0.1,0.2]
 
-                x_train, x_val, y_train = self.ff_esn(x_train_init, x_val_init, y_train_init, IS, connect)
+                x_train, x_val, y_train = self.ff_esn(x_train_init, x_val_init, y_train_init, input_scaling, connect)
 
                 #2. Build Model
                 input_shape = (self.len_series, self.units, 1)
@@ -148,10 +156,10 @@ class Classifier_EMN:
         
                 duration = time.time() - start_time
 
-                model_acc = model.evaluate(x_val, y_val, verbose=False)[1]
+                model_acc = model.evaluate(x_train, y_train, verbose=False)[1]
 
                 if (model_acc > current_acc):
-                    IS_final = IS
+                    input_scaling_final = input_scaling
                     connect_final = connect
                     x_train_final = x_train
                     x_val_final = x_val
@@ -164,7 +172,10 @@ class Classifier_EMN:
                     current_acc = model_acc
                 
                 keras.backend.clear_session()
-        print('Final IS: {0}; Final connectivity: {1}'.format(IS_final, connect_final))
+        print('Final input_scaling: {0}; Final connectivity: {1}'.format(input_scaling_final, connect_final))
+        self.final_params_selected.append(input_scaling_final)
+        self.final_params_selected.append(connect_final)
+
         return x_train_final, x_val_final, y_train_final, model_final, hist_final, duration_final, current_acc 
         
     def fit(self, x_train, y_train, x_val, y_val, y_true):
@@ -194,7 +205,7 @@ class Classifier_EMN:
             start_time = time.time()
             
             hist = model.fit(x_train, y_train, batch_size=batch, epochs=epoch,
-                verbose=False, validation_data=(x_val,y_val), callbacks=self.callbacks)
+                verbose=False, validation_data=(x_train,y_train), callbacks=self.callbacks)
             
             duration = time.time() - start_time
 
@@ -209,6 +220,7 @@ class Classifier_EMN:
             
             keras.backend.clear_session()
         print('Final ratio: {0}'.format(ratio_final))
+        self.final_params_selected.append(ratio_final)
         self.model = model_final
         self.hist = hist_final 
 
@@ -216,6 +228,9 @@ class Classifier_EMN:
 
         # convert the predicted from binary to integer
         y_pred = np.argmax(y_pred , axis=1)
+
+        param_print = pd.DataFrame(np.array([self.final_params_selected], dtype=object), columns=['input_scaling','connectivity','ratio'])
+        param_print.to_csv(self.output_dir + 'final_params.csv',index=False)
 
         save_logs(self.output_dir, self.hist, y_pred, y_true, duration_final, self.verbose, lr=False)
 
