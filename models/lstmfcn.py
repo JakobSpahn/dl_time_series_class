@@ -169,7 +169,7 @@ class Classifier_LSTMFCN:
         self.x_train = x_train.reshape(x_train.shape[0],1,x_train.shape[1])
         self.x_test = np.reshape(x_test,(x_test.shape[0],1,x_test.shape[1]))
         self.y_train = y_train
-        self.y_test = x_test
+        self.y_test = y_test
         self.y_true = y_true
 
         print('x_train.shape: {0}'.format(self.x_train.shape))
