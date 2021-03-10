@@ -143,9 +143,10 @@ class Classifier_EMN:
 
         for input_scaling in self.input_scaling:
             for connect in self.connectivity:
-                
-                x_train, x_val, y_train = self.ff_esn(x_train_init, x_val_init, y_train_init, input_scaling, connect)
-                
+
+                x_train, x_val, y_train = self.ff_esn(
+                    x_train_init, x_val_init, y_train_init, input_scaling, connect)
+
                 for num_filter in self.num_filter:
 
                     ratio = [0.1, 0.2]
@@ -171,9 +172,14 @@ class Classifier_EMN:
                     model_loss, model_acc = model.evaluate(
                         x_train, y_train, verbose=False)
 
-                    test_loss, test_acc = model.evaluate(x_val,y_val, verbose=False)
+                    print('train_loss: {0}, train_acc: {1}'.format(
+                        model_loss, model_acc))
 
-                    print('test_loss: {0}, test_acc: {1}'.format(test_loss,test_acc))
+                    test_loss, test_acc = model.evaluate(
+                        x_val, y_val, verbose=False)
+
+                    print('test_loss: {0}, test_acc: {1}'.format(
+                        test_loss, test_acc))
 
                     y_pred = model.predict(x_val)
                     # convert the predicted from binary to integer
@@ -195,6 +201,7 @@ class Classifier_EMN:
                                        'df_params.csv', index=False)
 
                     if (model_loss < current_loss):
+                        print('New winner')
                         input_scaling_final = input_scaling
                         connect_final = connect
                         num_filter_final = num_filter
@@ -253,6 +260,14 @@ class Classifier_EMN:
             model_loss, model_acc = model.evaluate(
                 x_train, y_train, verbose=False)
 
+            print('train_loss: {0}, train_acc: {1}'.format(
+                model_loss, model_acc))
+
+            test_loss, test_acc = model.evaluate(x_val, y_val, verbose=False)
+
+            print('test_loss: {0}, test_acc: {1}'.format(
+                test_loss, test_acc))
+
             y_pred = model.predict(x_val)
             # convert the predicted from binary to integer
             y_pred = np.argmax(y_pred, axis=1)
@@ -265,12 +280,14 @@ class Classifier_EMN:
                               'df_metrics.csv', index=False)
             model.save(temp_output_dir + 'model.hdf5')
 
-            params = [self.final_params_selected[0], self.final_params_selected[1], self.final_params_selected[2], ratio]
+            params = [self.final_params_selected[0],
+                      self.final_params_selected[1], self.final_params_selected[2], ratio]
             param_print = pd.DataFrame(np.array([params], dtype=object), columns=[
                 'input_scaling', 'connectivity', 'num_filter', 'ratio'])
             param_print.to_csv(temp_output_dir + 'df_params.csv', index=False)
 
             if (model_loss < current_loss):
+                print('New winner')
                 hist_final = hist
                 model_final = model
                 duration_final = duration
