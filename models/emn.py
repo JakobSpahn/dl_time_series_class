@@ -13,6 +13,8 @@ import matplotlib
 
 from tqdm.keras import TqdmCallback
 
+from sklearn.model_selection import train_test_split
+
 
 class Classifier_EMN:
     def __init__(self, output_dir, nb_classes, verbose):
@@ -98,7 +100,7 @@ class Classifier_EMN:
 
         return train_data, train_labels
 
-    def ff_esn(self, x_train, x_val, y_train, input_scaling, connect):
+    def ff_esn(self, input_scaling, connect):
         units = self.units
         spectral_radius = self.spectral
         leaky = self.leaky
@@ -106,46 +108,51 @@ class Classifier_EMN:
 
         escnn = Reservoir(units, n_in, input_scaling,
                           spectral_radius, connect, leaky)
-        x_train = escnn.set_weights(x_train)
-        x_val = escnn.set_weights(x_val)
+        x_train = escnn.set_weights(self.x_train)
+        x_val = escnn.set_weights(self.x_val)
+        x_test = escnn.set_weights(self.x_test)
 
-        self.nb_samples_train = np.shape(x_train)[0]
-        self.nb_samples_val = np.shape(x_val)[0]
+        nb_samples_train = np.shape(x_train)[0]
+        nb_samples_val = np.shape(x_val)[0]
+        nb_samples_test = np.shape(x_test)[0]
         self.len_series = x_val.shape[1]
 
         # Reshape test and train data. Train data is also shuffled
-        x_val = np.reshape(x_val, (self.nb_samples_val,
+        x_val = np.reshape(x_val, (nb_samples_val,
                                    self.len_series, self.units, 1))
+        x_test = np.reshape(x_test, (nb_samples_test,
+                                     self.len_series, self.units, 1))
+
         x_train, y_train = self.reshape_shuffle(
-            x_train, y_train, self.nb_samples_train, self.units, self.len_series)
+            x_train, self.y_train, nb_samples_train, self.units, self.len_series)
 
         # From NCHW to NHWC
         x_train = tf.transpose(x_train, [0, 2, 3, 1])
         print('NHWC: {0}'.format(x_train.shape))
         # print(x_train.shape)
 
-        return x_train, x_val, y_train
+        return x_train, y_train, x_val, x_test
 
-    def tune_esn(self, x_train_init, x_val_init, y_train_init, y_val):
+    def tune_esn(self):
         input_scaling_final = None
         connect_final = None
         num_filter_final = None
         x_train_final = None
-        x_val_final = None
         y_train_final = None
+        x_val_final = None
+        x_test_final = None
         duration_final = None
         model_final = None
         hist_final = None
 
-        current_loss = 1e10
+        current_acc = 0
 
         self.it = 0
 
         for input_scaling in self.input_scaling:
             for connect in self.connectivity:
 
-                x_train, x_val, y_train = self.ff_esn(
-                    x_train_init, x_val_init, y_train_init, input_scaling, connect)
+                x_train, y_train, x_val, x_test = self.ff_esn(input_scaling, connect)
 
                 for num_filter in self.num_filter:
 
@@ -155,8 +162,9 @@ class Classifier_EMN:
                     input_shape = (self.len_series, self.units, 1)
                     model = self.build_model(
                         input_shape, self.nb_classes, self.len_series, ratio, num_filter)
-                    if(self.verbose == True):
-                        model.summary()
+
+                    #if(self.verbose == True):
+                        #model.summary()
 
                     # 3. Train Model
                     batch = self.batch
@@ -165,23 +173,16 @@ class Classifier_EMN:
                     start_time = time.time()
 
                     hist = model.fit(x_train, y_train, batch_size=batch, epochs=epoch,
-                                     verbose=False, validation_data=(x_val, y_val), callbacks=self.callbacks)
+                                     verbose=False, validation_data=(x_val, self.y_val), callbacks=self.callbacks)
 
                     duration = time.time() - start_time
 
                     model_loss, model_acc = model.evaluate(
-                        x_train, y_train, verbose=False)
-
-                    print('train_loss: {0}, train_acc: {1}'.format(
+                        x_val, self.y_val, verbose=False)
+                    print('val_loss: {0}, val_acc: {1}'.format(
                         model_loss, model_acc))
 
-                    test_loss, test_acc = model.evaluate(
-                        x_val, y_val, verbose=False)
-
-                    print('test_loss: {0}, test_acc: {1}'.format(
-                        test_loss, test_acc))
-
-                    y_pred = model.predict(x_val)
+                    y_pred = model.predict(x_test)
                     # convert the predicted from binary to integer
                     y_pred = np.argmax(y_pred, axis=1)
                     df_metrics = calculate_metrics(
@@ -200,18 +201,19 @@ class Classifier_EMN:
                     param_print.to_csv(temp_output_dir +
                                        'df_params.csv', index=False)
 
-                    if (model_loss < current_loss):
+                    if (model_acc > current_acc):
                         print('New winner')
                         input_scaling_final = input_scaling
                         connect_final = connect
                         num_filter_final = num_filter
                         x_train_final = x_train
-                        x_val_final = x_val
                         y_train_final = y_train
+                        x_val_final = x_val
+                        x_test_final = x_test
                         duration_final = duration
                         model_final = model
                         hist_final = hist
-                        current_loss = model_loss
+                        current_acc = model_acc
 
                     self.it += 1
                     keras.backend.clear_session()
@@ -222,16 +224,22 @@ class Classifier_EMN:
         self.final_params_selected.append(connect_final)
         self.final_params_selected.append(num_filter_final)
 
-        return x_train_final, x_val_final, y_train_final, model_final, hist_final, duration_final, current_loss, num_filter_final
+        return x_train_final, y_train_final, x_val_final, x_test_final, model_final, hist_final, duration_final, current_acc, num_filter_final
 
     def fit(self, x_train, y_train, x_val, y_val, y_true):
 
         self.y_true = y_true
-        # 1. Tune ESN and num_filter
-        x_train, x_val, y_train, model_init, hist_init, duration_init, loss_init, num_filter = self.tune_esn(
-            x_train, x_val, y_train, y_val)
 
-        current_loss = loss_init
+        self.x_test = x_val
+        self.y_test = y_val
+
+        self.x_train, self.x_val, self.y_train, self.y_val = \
+            train_test_split(x_train, y_train, test_size=0.2)
+
+        # 1. Tune ESN and num_filter
+        self.x_train, self.y_train, self.x_val, self.x_test, model_init, hist_init, duration_init, acc_init, num_filter = self.tune_esn()
+
+        current_acc = acc_init
         hist_final = hist_init
         model_final = model_init
         duration_final = duration_init
@@ -252,23 +260,18 @@ class Classifier_EMN:
 
             start_time = time.time()
 
-            hist = model.fit(x_train, y_train, batch_size=batch, epochs=epoch,
-                             verbose=False, validation_data=(x_train, y_train), callbacks=self.callbacks)
+            hist = model.fit(self.x_train, self.y_train, batch_size=batch, epochs=epoch,
+                             verbose=False, validation_data=(self.x_val, self.y_val), callbacks=self.callbacks)
 
             duration = time.time() - start_time
 
             model_loss, model_acc = model.evaluate(
-                x_train, y_train, verbose=False)
+                self.x_val, self.y_val, verbose=False)
 
-            print('train_loss: {0}, train_acc: {1}'.format(
+            print('val_loss: {0}, val_acc: {1}'.format(
                 model_loss, model_acc))
 
-            test_loss, test_acc = model.evaluate(x_val, y_val, verbose=False)
-
-            print('test_loss: {0}, test_acc: {1}'.format(
-                test_loss, test_acc))
-
-            y_pred = model.predict(x_val)
+            y_pred = model.predict(self.x_val)
             # convert the predicted from binary to integer
             y_pred = np.argmax(y_pred, axis=1)
             df_metrics = calculate_metrics(self.y_true, y_pred, duration)
@@ -286,13 +289,13 @@ class Classifier_EMN:
                 'input_scaling', 'connectivity', 'num_filter', 'ratio'])
             param_print.to_csv(temp_output_dir + 'df_params.csv', index=False)
 
-            if (model_loss < current_loss):
+            if (model_acc > current_acc):
                 print('New winner')
                 hist_final = hist
                 model_final = model
                 duration_final = duration
                 ratio_final = ratio
-                current_loss = model_loss
+                current_acc = model_acc
 
             keras.backend.clear_session()
             self.it += 1
@@ -302,17 +305,18 @@ class Classifier_EMN:
         self.model = model_final
         self.hist = hist_final
 
-        y_pred = self.model.predict(x_val)
+        y_pred = self.model.predict(self.x_val)
 
         # convert the predicted from binary to integer
         y_pred = np.argmax(y_pred, axis=1)
 
         param_print = pd.DataFrame(np.array([self.final_params_selected], dtype=object), columns=[
                                    'input_scaling', 'connectivity', 'num_filter', 'ratio'])
+
         param_print.to_csv(self.output_dir +
                            'df_final_params.csv', index=False)
 
-        save_logs(self.output_dir, self.hist, y_pred, y_true,
+        save_logs(self.output_dir, self.hist, y_pred, self.y_true,
                   duration_final, self.verbose, lr=False)
 
         keras.backend.clear_session()
