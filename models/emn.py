@@ -171,6 +171,10 @@ class Classifier_EMN:
                     model_loss, model_acc = model.evaluate(
                         x_train, y_train, verbose=False)
 
+                    test_loss, test_acc = model.evaluate(x_val,y_val, verbose=False)
+
+                    print('test_loss: {0}, test_acc: {1}'.format(test_loss,test_acc))
+
                     y_pred = model.predict(x_val)
                     # convert the predicted from binary to integer
                     y_pred = np.argmax(y_pred, axis=1)
