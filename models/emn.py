@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow.keras as keras
 import tensorflow as tf
 import numpy as np
@@ -251,8 +253,8 @@ class Classifier_EMN:
             input_shape = (self.len_series, self.units, 1)
             model = self.build_model(
                 input_shape, self.nb_classes, self.len_series, ratio, num_filter)
-            if(self.verbose == True):
-                model.summary()
+            #if(self.verbose == True):
+                #model.summary()
 
             # 3. Train Model
             batch = self.batch
@@ -271,7 +273,7 @@ class Classifier_EMN:
             print('val_loss: {0}, val_acc: {1}'.format(
                 model_loss, model_acc))
 
-            y_pred = model.predict(self.x_val)
+            y_pred = model.predict(self.x_test)
             # convert the predicted from binary to integer
             y_pred = np.argmax(y_pred, axis=1)
             df_metrics = calculate_metrics(self.y_true, y_pred, duration)
@@ -305,7 +307,7 @@ class Classifier_EMN:
         self.model = model_final
         self.hist = hist_final
 
-        y_pred = self.model.predict(self.x_val)
+        y_pred = self.model.predict(self.x_test)
 
         # convert the predicted from binary to integer
         y_pred = np.argmax(y_pred, axis=1)
