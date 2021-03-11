@@ -48,6 +48,8 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
             data_format='channels_last')(y_layer_1)
 
         concat_layer = keras.layers.concatenate([x_layer_1, y_layer_1])
+        concat_layer = keras.layers.Dense(64, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
+        concat_layer = keras.layers.Dense(128, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
         concat_layer = keras.layers.Dropout(0.25)(concat_layer)
 
         output_layer = keras.layers.Dense(
