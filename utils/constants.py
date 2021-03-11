@@ -1,4 +1,4 @@
-UCR_SELECTION2 = ['Adiac','Beef', 'BeetleFly','BirdChicken','ChlorineConcentration',
+UCR_SELECTION = ['Adiac','Beef', 'BeetleFly','BirdChicken','ChlorineConcentration',
                  'Computers','CricketY','Crop','Earthquakes','ECG200',
                  'ECG5000','ElectricDevices','Haptics','Herring','InlineSkate',
                  'Lightning2','Lightning7','MiddlePhalanxOutlineAgeGroup','MiddlePhalanxTW','MoteStrain',
@@ -10,7 +10,7 @@ UCR_SELECTION_FOR_LSTM = ['Haptics','Herring','InlineSkate',
                  'OliveOil','OSULeaf','Phoneme','ScreenType','ShapesAll',
                  'SmallKitchenAppliances','UWaveGestureLibraryAll','Wine','WordSynonyms','Worms']
 
-UCR_SELECTION = ['Adiac']
+UCR_SELECTION2 = ['Adiac']
 
 CLASSIFIERS = ['emn_cv']
 

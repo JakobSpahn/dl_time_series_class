@@ -10,8 +10,9 @@ import os
 
 
 class Classifier_EMN_CV:
-    def __init__(self, output_dir, verbose):
+    def __init__(self, output_dir, nb_classes, verbose):
         self.output_dir = output_dir
+        self.nb_classes = nb_classes
         self.verbose = verbose
 
         # Hyperparameters for first grid search
@@ -32,7 +33,7 @@ class Classifier_EMN_CV:
                             connectivity=self.connectivity,
                             num_filter=self.num_filter)
 
-        emn_stage_1 = Classifier_EMN(verbose=False)
+        emn_stage_1 = Classifier_EMN(nb_classes=self.nb_classes, verbose=False)
 
         grid_1 = GridSearchCV(estimator=emn_stage_1,
                               param_grid=param_grid_1, cv=3, verbose=3)

@@ -15,7 +15,7 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
                  connectivity=0.3, leaky=1, n_in=1,
                  epochs=500, batch_size=25,
                  ratio=[0.1, 0.2], num_filter=120,
-                 verbose=True):
+                 nb_classes = None, verbose=True):
         self.res_units = res_units
         self.spectral_radius = spectral_radius
         self.input_scaling = input_scaling
@@ -27,6 +27,7 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
         self.ratio = ratio
         self.num_filter = num_filter
 
+        self.nb_classes = nb_classes
         self.verbose = verbose
 
     def build_model(self, input_shape, nb_classes, len_series):
@@ -83,6 +84,9 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
         return train_data, train_labels
 
     def fit(self, x, y):
+        if not self.nb_classes:
+            raise ValueError('nb_classes is an essential parameter')
+
         self.escnn_ = Reservoir(self.res_units, self.n_in,
                                 self.input_scaling, self.spectral_radius,
                                 self.connectivity, self.leaky, verbose=self.verbose)
@@ -91,14 +95,14 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
         nb_samples_x = np.shape(x)[0]
         len_series = x.shape[1]
         input_shape = (len_series, self.res_units, 1)
-        nb_classes = len(np.unique(np.argmax(y, axis=1)))
+        #nb_classes = len(np.unique(np.argmax(y, axis=1)))
 
-        x, y = self._reshape_shuffle(x, y, nb_samples_x, nb_classes, len_series)
+        x, y = self._reshape_shuffle(x, y, nb_samples_x, self.nb_classes, len_series)
 
         # From NCHW to NHWC
         x = tf.transpose(x, [0, 2, 3, 1])
 
-        self.model = self.build_model(input_shape, nb_classes, len_series)
+        self.model = self.build_model(input_shape, self.nb_classes, len_series)
 
         if self.verbose:
             self.model.summary()

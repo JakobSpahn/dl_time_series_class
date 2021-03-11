@@ -49,7 +49,7 @@ def create_classifier(classifier_name, input_shape, nb_classes, output_dir, tune
         return lstmfcn.Classifier_LSTMFCN(output_dir, nb_classes, tune, verbose)
     if classifier_name == 'emn_cv':
         from models.emn import emn_cv
-        return emn_cv.Classifier_EMN_CV(output_dir, verbose)
+        return emn_cv.Classifier_EMN_CV(output_dir, nb_classes, verbose)
 
 root_dir = os.getcwd()
 print(root_dir)
