@@ -4,6 +4,7 @@ import tensorflow as tf
 from sklearn.model_selection import GridSearchCV
 from .emn_base import Classifier_EMN
 from utils.utils import save_logs, calculate_metrics, create_directory
+import csv
 
 
 class Classifier_EMN_CV:
@@ -58,6 +59,19 @@ class Classifier_EMN_CV:
 
         duration = time.time() - start_time
 
+        ###Save Metrics
         df_metrics = calculate_metrics(y_true, y_pred, duration)
+        if self.verbose:
+            print(df_metrics)
         df_metrics.to_csv(self.output_dir +
                           'df_metrics.csv', index=False)
+        ###Save Params
+        try:
+            with open(self.output_dir + 'final_params.csv', 'w') as csvfile:
+                writer = csv.writer(csvfile)
+                for key, value in emn_final.get_params():
+                    writer.writerow([key, value])
+        except IOError:
+            print("I/O error")
+        
+

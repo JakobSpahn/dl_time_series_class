@@ -64,7 +64,7 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
 
         return model
 
-    def reshape_shuffle(self, x_train, y_train, nb_samples, nb_classes, len_series):
+    def _reshape_shuffle(self, x_train, y_train, nb_samples, nb_classes, len_series):
 
         # Generate template for train data
         train_data = np.zeros((nb_samples, 1, len_series, self.res_units))
@@ -93,7 +93,7 @@ class Classifier_EMN(BaseEstimator, ClassifierMixin):
         input_shape = (len_series, self.res_units, 1)
         nb_classes = len(np.unique(np.argmax(y, axis=1)))
 
-        x, y = self.reshape_shuffle(x, y, nb_samples_x, nb_classes, len_series)
+        x, y = self._reshape_shuffle(x, y, nb_samples_x, nb_classes, len_series)
 
         # From NCHW to NHWC
         x = tf.transpose(x, [0, 2, 3, 1])
