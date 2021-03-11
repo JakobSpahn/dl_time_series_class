@@ -20,7 +20,7 @@ class Classifier_EMN_CV:
         self.num_filter = [90, 120, 150]
 
         # Hyperparameters for secont grid search
-        self.ratio = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
+        self.ratio = [[0.1, 0.2], [0.2,0.3], [0.3, 0.4], [0.4,0.5],  [0.5, 0.6], [0.6,0.7], [0.7, 0.8]]
 
     def fit(self, x_train, y_train, x_test, y_test, y_true):
         start_time_tuning = time.time()
