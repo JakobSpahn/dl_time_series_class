@@ -4,8 +4,8 @@ import tensorflow as tf
 from tqdm.auto import trange
 
 class Reservoir:
-    def __init__(self, units, n_in, IS, spectral_radius, connectivity, leaky, bias=False, activation='tanh',seed=1882517):
-        print('Initializing reservoir space...')
+    def __init__(self, units, n_in, IS, spectral_radius, connectivity, leaky, bias=False, activation='tanh',seed=1882517, verbose = True):
+        self.verbose = verbose
         
         self.units = units
         self.n_in = n_in
@@ -15,6 +15,9 @@ class Reservoir:
         self.leaky = leaky
         self.bias = bias
         self.activation=activation
+
+        if(self.verbose):
+            print('Initializing reservoir space...')
         
         #Set Seed for Numpy:
         rng = np.random.RandomState(seed)
@@ -48,9 +51,13 @@ class Reservoir:
         #Init weight template: num_samples * timestamps * units
         weights = np.empty((num_samples,(num_frames-n_forget_steps), self.units), np.float32)
         
+        if self.verbose:
+            range_num_samples = trange(num_samples, desc='setting reservoir weights')
+        else: 
+            range_num_samples = range(num_samples)
 
         #For every time series in the dataset:
-        for i_sample in (bar := trange(num_samples)):
+        for i_sample in range_num_samples:
             series = data[i_sample]
             #print('Create weights of %4d-th sample'%(i_sample)
             collect_weights = np.zeros((num_frames-n_forget_steps, self.units))
@@ -79,7 +86,6 @@ class Reservoir:
             collect_weights = np.asarray(collect_weights)
             weights[i_sample] = collect_weights
 
-            bar.set_description("Setting Weights")
         
 
         return weights
