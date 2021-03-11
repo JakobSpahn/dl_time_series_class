@@ -158,6 +158,7 @@ class Classifier_LSTMFCN:
         print('Final Cell Selected:',final_cell)
         file_cells = open(self.output_dir + 'best_num_cells.txt','w')
         file_cells.write(str(final_cell))
+        file_cells.close()
 
         return final_model, final_hist, final_dur
 

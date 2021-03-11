@@ -5,6 +5,8 @@ from sklearn.model_selection import GridSearchCV
 from .emn_base import Classifier_EMN
 from utils.utils import save_logs, calculate_metrics, create_directory
 import csv
+import pandas as pd
+import os
 
 
 class Classifier_EMN_CV:
@@ -15,12 +17,14 @@ class Classifier_EMN_CV:
         # Hyperparameters for first grid search
         self.input_scaling = [0.1, 1]
         self.connectivity = [0.3, 0.7]
-        self.num_filter = [60, 90, 120]
+        self.num_filter = [90, 120, 150]
 
         # Hyperparameters for secont grid search
         self.ratio = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8]]
 
     def fit(self, x_train, y_train, x_test, y_test, y_true):
+        start_time_tuning = time.time()
+
         #######################
         ##Grid Search Stage 1##
         #######################
@@ -31,7 +35,7 @@ class Classifier_EMN_CV:
         emn_stage_1 = Classifier_EMN(verbose=False)
 
         grid_1 = GridSearchCV(estimator=emn_stage_1,
-                              param_grid=param_grid_1, cv=5, verbose=3)
+                              param_grid=param_grid_1, cv=3, verbose=3)
         grid_1_result = grid_1.fit(x_train, y_train)
 
         #######################
@@ -42,8 +46,10 @@ class Classifier_EMN_CV:
         emn_stage_2 = grid_1_result.best_estimator_
 
         grid_2 = GridSearchCV(estimator=emn_stage_2,
-                              param_grid=param_grid_2, cv=5, verbose=3)
+                              param_grid=param_grid_2, cv=3, verbose=3)
         grid_2_result = grid_2.fit(x_train, y_train)
+
+        duration_tuning = time.time() - start_time_tuning
 
         #####################################
         ##Final Training on whole train set##
@@ -59,19 +65,21 @@ class Classifier_EMN_CV:
 
         duration = time.time() - start_time
 
-        ###Save Metrics
+        # Save Metrics
         df_metrics = calculate_metrics(y_true, y_pred, duration)
         if self.verbose:
             print(df_metrics)
         df_metrics.to_csv(self.output_dir +
                           'df_metrics.csv', index=False)
-        ###Save Params
-        try:
-            with open(self.output_dir + 'final_params.csv', 'w') as csvfile:
-                writer = csv.writer(csvfile)
-                for key, value in emn_final.get_params():
-                    writer.writerow([key, value])
-        except IOError:
-            print("I/O error")
+        # Save Params
+        df_final_tuned = pd.DataFrame([[emn_final.input_scaling, emn_final.connectivity, emn_final.num_filter, emn_final.ratio]], columns=[
+                                      'input_scaling', 'connectivity', 'num_filter', 'ratio'])
+        df_final_tuned.to_csv(self.output_dir +
+                           'df_final_params.csv', index=False)
         
+        #Print Tune Duration
+        f = open(self.output_dir+ '/grid_search_duration.txt','w')
+        f.write(str(duration_tuning))
+        f.close()
 
+        
