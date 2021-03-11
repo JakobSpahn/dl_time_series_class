@@ -5,7 +5,7 @@ import sklearn
 
 from utils.utils import read_dataset
 from utils.utils import create_directory
-from utils.constants import UCR_NO_VARY
+from utils.constants import UCR_SELCTION
 from utils.constants import CLASSIFIERS
 from utils.constants import ITERATIONS
 
@@ -69,7 +69,7 @@ for classifier_name in CLASSIFIERS:
 
         tmp_output_dir = root_dir + '/results/' + classifier_name + '/UCRArchive_2018/' + trr + '/'
 
-        for dataset_name in UCR_NO_VARY:
+        for dataset_name in UCR_SELCTION:
             print('\t\t\tdataset_name: ', dataset_name)
 
             output_dir = tmp_output_dir + dataset_name + '/'
