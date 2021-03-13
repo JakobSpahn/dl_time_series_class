@@ -50,6 +50,12 @@ def create_classifier(classifier_name, input_shape, nb_classes, output_dir, tune
     if classifier_name == 'emn_cv':
         from models.emn import emn_cv
         return emn_cv.Classifier_EMN_CV(output_dir, nb_classes, verbose)
+    if classifier_name == 'rocket':
+        from models.rocket import rocket
+        return rocket.Classifier_ROCKET(output_dir, verbose)
+    if classifier_name == 'rocket_tf':
+        from models.rocket import rocket_tf
+        return rocket_tf.Classifier_ROCKET_TF(output_dir, verbose)
 
 root_dir = os.getcwd()
 print(root_dir)

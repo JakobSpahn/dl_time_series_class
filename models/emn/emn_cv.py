@@ -2,7 +2,7 @@ import time
 import tensorflow.keras as keras
 import tensorflow as tf
 from sklearn.model_selection import GridSearchCV
-from .emn_base import Classifier_EMN
+from .base_emn import Base_Classifier_EMN
 from utils.utils import save_logs, calculate_metrics, create_directory
 import csv
 import pandas as pd
@@ -33,7 +33,7 @@ class Classifier_EMN_CV:
                             connectivity=self.connectivity,
                             num_filter=self.num_filter)
 
-        emn_stage_1 = Classifier_EMN(nb_classes=self.nb_classes, verbose=False)
+        emn_stage_1 = Base_Classifier_EMN(nb_classes=self.nb_classes, verbose=False)
 
         grid_1 = GridSearchCV(estimator=emn_stage_1,
                               param_grid=param_grid_1, cv=3, verbose=3)

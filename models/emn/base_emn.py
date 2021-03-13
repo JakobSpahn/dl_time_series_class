@@ -9,7 +9,7 @@ import tensorflow as tf
 tf.get_logger().setLevel(logging.ERROR)
 
 
-class Classifier_EMN(BaseEstimator, ClassifierMixin):
+class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
     def __init__(self, res_units=32,
                  spectral_radius=0.9, input_scaling=0.1,
                  connectivity=0.3, leaky=1, n_in=1,

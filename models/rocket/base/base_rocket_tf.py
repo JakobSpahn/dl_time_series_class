@@ -9,11 +9,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.linear_model import RidgeClassifierCV
 
 
-class Classifier_ROCKET_TF(BaseEstimator, ClassifierMixin):
+class Base_Classifier_ROCKET_TF(BaseEstimator, ClassifierMixin):
     '''
     X/Input needs to be in shape=(num_samples, c_in, inp_len)
     '''
-
     def __init__(self, n_kernels=10_000, kss=[7, 9, 11], verbose=True):
         self.n_kernels = n_kernels
         self.kss = kss
@@ -33,6 +32,8 @@ class Classifier_ROCKET_TF(BaseEstimator, ClassifierMixin):
         time_b = time.perf_counter()
         self.train_timings_ = [time_b - time_a]
 
+        if self.verbose:
+            print('fit classifier')
         time_a = time.perf_counter()
         self.ridge_cv_ = RidgeClassifierCV(
             alphas=np.logspace(-3, 3, 10), normalize=True)
@@ -49,19 +50,20 @@ class Classifier_ROCKET_TF(BaseEstimator, ClassifierMixin):
 
         # Check if x_test has already been transformed and get the timing for that
         try:
-            if self.x_test_:
-                self.pred_timings_ = [self.pred_timings_[
-                    0]] if self.pred_timings_ else [self.test_timings_[0]]
+            if tf.size(self.x_test_, out_type=tf.bool):
+                self.test_timings_ = [self.test_timings_[0]]
         except AttributeError:
             time_a = time.perf_counter()
             self.x_test_ = self.kernels_.call(x)
             time_b = time.perf_counter()
-            self.pred_timings_ = [time_b - time_a]
+            self.test_timings_ = [time_b - time_a]
 
+        if self.verbose:
+            print('predict')
         time_a = time.perf_counter()
         y_pred = self.ridge_cv_.predict(self.x_test_)
         time_b = time.perf_counter()
-        self.pred_timings_.append(time_b - time_a)
+        self.test_timings_.append(time_b - time_a)
 
         return y_pred
 
@@ -72,16 +74,16 @@ class Classifier_ROCKET_TF(BaseEstimator, ClassifierMixin):
 
         # Check if x_test has already been transformed and get the timing for that
         try:
-            if self.x_test_:
-                print('Thinks it has x_test_')
-                self.test_timings_ = [self.test_timings_[
-                    0]] if self.test_timings_ else [self.pred_timings_[0]]
+            if tf.size(self.x_test_, out_type=tf.bool):
+                self.test_timings_ = [self.test_timings_[0]]
         except AttributeError:
             time_a = time.perf_counter()
             self.x_test_ = self.kernels_.call(x)
             time_b = time.perf_counter()
             self.test_timings_ = [time_b - time_a]
 
+        if self.verbose:
+            print('test')
         time_a = time.perf_counter()
         acc = self.ridge_cv_.score(self.x_test_, y)
         time_b = time.perf_counter()

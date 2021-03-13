@@ -8,11 +8,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.linear_model import RidgeClassifierCV
 
 
-class Classifier_ROCKET(BaseEstimator, ClassifierMixin):
+class Base_Classifier_ROCKET(BaseEstimator, ClassifierMixin):
     '''
-    X/Input needs to be in shape=(num_samples, c_in, inp_len)
+    X/Input needs to be in shape=(num_samples, inp_len)
     '''
-
     def __init__(self, n_kernels=10_000, kss=(7, 9, 11), verbose=True):
         self.n_kernels = n_kernels
         self.kss = kss
@@ -48,23 +47,22 @@ class Classifier_ROCKET(BaseEstimator, ClassifierMixin):
 
         # Check if x_test has already been transformed and get the timing for that
         try:
-            if self.x_test_:
-                self.pred_timings_ = [self.pred_timings_[
-                    0]] if self.pred_timings_ else [self.test_timings_[0]]
+            if self.x_test_.size:
+                self.test_timings_ = [self.test_timings_[0]]
         except AttributeError:
             if self.verbose:
                 print('apply kernels')
             time_a = time.perf_counter()
             self.x_test_ = apply_kernels(x, self.kernels_)
             time_b = time.perf_counter()
-            self.pred_timings_ = [time_b - time_a]
+            self.test_timings_ = [time_b - time_a]
 
         if self.verbose:
             print('predict')
         time_a = time.perf_counter()
         y_pred = self.ridge_cv_.predict(self.x_test_)
         time_b = time.perf_counter()
-        self.pred_timings_.append(time_b - time_a)
+        self.test_timings_.append(time_b - time_a)
 
         return y_pred
 
@@ -73,10 +71,8 @@ class Classifier_ROCKET(BaseEstimator, ClassifierMixin):
 
         # Check if x_test has already been transformed and get the timing for that
         try:
-            if self.x_test_:
-                print('Thinks it has x_test_')
-                self.test_timings_ = [self.test_timings_[
-                    0]] if self.test_timings_ else [self.pred_timings_[0]]
+            if self.x_test_.size:
+                self.test_timings_ = [self.test_timings_[0]]
         except AttributeError:
             if self.verbose:
                 print('apply kernels')
