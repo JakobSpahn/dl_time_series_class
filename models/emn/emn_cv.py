@@ -33,9 +33,8 @@ class Classifier_EMN_CV:
         param_grid_1 = dict(input_scaling=self.input_scaling,
                             connectivity=self.connectivity,
                             num_filter=self.num_filter)
-
-        emn_stage_1 = Base_Classifier_EMN(
-            nb_classes=self.nb_classes, verbose=False)
+        
+        emn_stage_1 = Base_Classifier_EMN(nb_classes=self.nb_classes, verbose=False)
 
         grid_1 = GridSearchCV(estimator=emn_stage_1,
                               param_grid=param_grid_1, cv=3, verbose=3)

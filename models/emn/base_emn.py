@@ -103,12 +103,12 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         # From NCHW to NHWC
         #x = tf.transpose(x, [0, 2, 3, 1])
 
-        self.model = self.build_model(input_shape, self.nb_classes, len_series)
+        self.model_ = self.build_model(input_shape, self.nb_classes, len_series)
 
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
-        self.hist_ = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs,
+        self.hist_ = self.model_.fit(x, y, batch_size=self.batch_size, epochs=self.epochs,
                                     verbose=False, callbacks=self.callbacks_)
 
         keras.backend.clear_session()
@@ -124,7 +124,7 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         len_series = x.shape[1]
         x = np.reshape(x, (nb_samples_test, 1, len_series, self.res_units))
 
-        y_pred = self.model.predict(x)
+        y_pred = self.model_.predict(x)
         y_pred = np.argmax(y_pred, axis=1)
 
         return y_pred
@@ -135,9 +135,9 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         len_series = x.shape[1]
         x = np.reshape(x, (nb_samples_x, 1, len_series, self.res_units))
 
-        outputs = self.model.evaluate(x, y, verbose=False)
+        outputs = self.model_.evaluate(x, y, verbose=False)
         if not isinstance(outputs, list):
             outputs = [outputs]
-        for name, output in zip(self.model.metrics_names, outputs):
+        for name, output in zip(self.model_.metrics_names, outputs):
             if name in ['accuracy', 'acc']:
                 return output
