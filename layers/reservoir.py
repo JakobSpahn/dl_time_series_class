@@ -36,7 +36,7 @@ class Reservoir:
         
         #Init bias
         if bias:
-            b_bound=1
+            b_bound=0.1
             self.b = 2 * b_bound * np.random.random(size=(self.units, 1))-b_bound
         else:
             self.b = 0
@@ -63,7 +63,6 @@ class Reservoir:
             collect_weights = np.zeros((num_frames-n_forget_steps, self.units))
             x = np.zeros((self.units, 1))
             
-            #inner = tqdm.tqdm(total=num_frames, desc='Stamp', position=1)
             #Now apply weights for every timestamp
             for t in range(num_frames):
                 u_t = np.asarray([series[t,:]]).T #Get every timestamp. Requires 3D shape to begin with
@@ -71,10 +70,7 @@ class Reservoir:
                 #ToDo: Extend Dict
                 xUpd = {
                     'tanh': lambda bias: np.tanh(np.dot(self.W_in, self.IS*u_t) + \
-                                                 np.dot(self.W_res.toarray(), x) + bias),
-                    
-                    'relu': lambda bias: tf.nn.relu(np.dot(self.W_in, self.IS*u_t) + \
-                                                    np.dot(self.W_res.toarray(), x) + bias).numpy()
+                                                 np.dot(self.W_res.toarray(), x) + bias)
                 }[self.activation](self.b)
                 
                 x = (1-self.leaky)*x + self.leaky*xUpd

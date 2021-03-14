@@ -38,18 +38,18 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         input_layer = keras.layers.Input(input_shape)
 
         x_layer_1 = keras.layers.Conv2D(self.num_filter, (nb_rows[0], nb_cols), kernel_initializer='lecun_uniform', activation='relu',
-                                        padding='valid', strides=(1, 1), data_format='channels_last')(input_layer)
+                                        padding='valid', strides=(1, 1), data_format='channels_first')(input_layer)
         x_layer_1 = keras.layers.GlobalMaxPooling2D(
             data_format='channels_first')(x_layer_1)
 
         y_layer_1 = keras.layers.Conv2D(self.num_filter, (nb_rows[1], nb_cols), kernel_initializer='lecun_uniform', activation='relu',
-                                        padding='valid', strides=(1, 1), data_format='channels_last')(input_layer)
+                                        padding='valid', strides=(1, 1), data_format='channels_first')(input_layer)
         y_layer_1 = keras.layers.GlobalMaxPooling2D(
-            data_format='channels_last')(y_layer_1)
+            data_format='channels_first')(y_layer_1)
 
         concat_layer = keras.layers.concatenate([x_layer_1, y_layer_1])
-        concat_layer = keras.layers.Dense(64, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
-        concat_layer = keras.layers.Dense(128, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
+        #concat_layer = keras.layers.Dense(64, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
+        #concat_layer = keras.layers.Dense(128, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
         concat_layer = keras.layers.Dropout(0.25)(concat_layer)
 
         output_layer = keras.layers.Dense(
@@ -96,13 +96,12 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
 
         nb_samples_x = np.shape(x)[0]
         len_series = x.shape[1]
-        input_shape = (len_series, self.res_units, 1)
-        #nb_classes = len(np.unique(np.argmax(y, axis=1)))
+        input_shape = (1, len_series, self.res_units)
 
         x, y = self._reshape_shuffle(x, y, nb_samples_x, self.nb_classes, len_series)
 
         # From NCHW to NHWC
-        x = tf.transpose(x, [0, 2, 3, 1])
+        #x = tf.transpose(x, [0, 2, 3, 1])
 
         self.model = self.build_model(input_shape, self.nb_classes, len_series)
 
@@ -123,7 +122,7 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         x = self.escnn_.set_weights(x)
         nb_samples_test = np.shape(x)[0]
         len_series = x.shape[1]
-        x = np.reshape(x, (nb_samples_test, len_series, self.res_units, 1))
+        x = np.reshape(x, (nb_samples_test, 1, len_series, self.res_units))
 
         y_pred = self.model.predict(x)
         y_pred = np.argmax(y_pred, axis=1)
@@ -134,7 +133,7 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         x = self.escnn_.set_weights(x)
         nb_samples_x = np.shape(x)[0]
         len_series = x.shape[1]
-        x = np.reshape(x, (nb_samples_x, len_series, self.res_units, 1))
+        x = np.reshape(x, (nb_samples_x, 1, len_series, self.res_units))
 
         outputs = self.model.evaluate(x, y, verbose=False)
         if not isinstance(outputs, list):
