@@ -65,6 +65,11 @@ def read_dataset(root_dir, dataset_name):
 
     return datasets_dict
 
+def save_test_duration(file_name, test_duration):
+    res = pd.DataFrame(data=np.zeros((1, 1), dtype=np.float), index=[0],
+                       columns=['test_duration'])
+    res['test_duration'] = test_duration
+    res.to_csv(file_name, index=False)
 
 def save_logs(output_dir, hist, y_pred, y_true, duration, verbose, lr=True, y_true_val=None, y_pred_val=None):
     hist_df = pd.DataFrame(hist.history)

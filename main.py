@@ -56,6 +56,12 @@ def create_classifier(classifier_name, input_shape, nb_classes, output_dir, tune
     if classifier_name == 'rocket_tf':
         from models.rocket import rocket_tf
         return rocket_tf.Classifier_ROCKET_TF(output_dir, verbose)
+    if classifier_name == 'inceptiontime':
+        from models.inception_time import inceptiontime
+        return inceptiontime.Classifier_InceptionTime(output_dir, input_shape, nb_classes, verbose)
+    if classifier_name == 'inception':
+        from models.inception_time import inception
+        return inception.Classifier_INCEPTION(output_dir, input_shape, nb_classes, verbose)
 
 root_dir = os.getcwd()
 print(root_dir)
