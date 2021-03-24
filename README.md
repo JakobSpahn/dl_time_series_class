@@ -6,7 +6,7 @@
 
 ### UCR Archive
 
-* [Raw performance metrics](results/results_ucr.csv)
+* [Raw performance metrics](results/results.csv)
 
 ### [Requirements](requirements.txt)
 
