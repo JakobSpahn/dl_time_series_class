@@ -41,6 +41,7 @@ Examples:
 The framework expects data from the UCR archive in the .ts format.
 
 The folder structure for the datasets is as follows: <root>/UCRArchive_2018/dataset_name/
+  
 For example, the train/test of Adiac should be saved under /UCRArchive_2018/Adiac/
 
 Calling main.py without any arguments trains every model on every dataset.
