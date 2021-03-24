@@ -44,9 +44,12 @@ The folder structure for the datasets is as follows: <root>/UCRArchive_2018/data
   
 For example, the train/test of Adiac should be saved under /UCRArchive_2018/Adiac/
 
+
 Calling main.py without any arguments trains every model on every dataset.
 
-Results are saved in <root>/results
+
+Results are saved in <root>/results.
+  
 
 To generate a results.csv for the tested models, main.py -g True is called.
 
