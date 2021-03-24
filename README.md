@@ -14,12 +14,12 @@
 * Matplotlib
 * Numba;
 * NumPy;
-* Pandas
-* scikit-learn (or equivalent).
-* sktime
-* scipy
-* TensorFlow-GPU
-* tqdm
+* Pandas;
+* scikit-learn;
+* sktime;
+* scipy;
+* TensorFlow-GPU;
+* tqdm.
 
 ## Usage
 
@@ -38,5 +38,13 @@ Examples:
 > python main.py -d Adiac Coffee -c rocket_tf mlp -i 1
 > python main.py -g True
 ```
+The framework expects data from the UCR archive in the .ts format.
+The folder structure for the datasets is as follows: <root>/UCRArchive_2018/<dataset>/
+
+Calling main.py without any arguments trains every model on every dataset.
+
+Results are saved in <root>/results
+
+To generate a results.csv for the tested models, main.py -g True is called.
 
 <div align="center">:rocket:</div>
