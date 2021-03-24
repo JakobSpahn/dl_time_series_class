@@ -52,5 +52,3 @@ Results are saved in <root>/results.
   
 
 To generate a results.csv for the tested models, main.py -g True is called.
-
-<div align="center">:rocket:</div>
