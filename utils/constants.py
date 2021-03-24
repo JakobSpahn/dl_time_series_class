@@ -5,6 +5,6 @@ UCR_SELECTION = ['Adiac','Beef', 'BeetleFly','BirdChicken','ChlorineConcentratio
                  'OliveOil','OSULeaf','Phoneme','ScreenType','ShapesAll',
                  'SmallKitchenAppliances','UWaveGestureLibraryAll','Wine','WordSynonyms','Worms']
 
-CLASSIFIERS = ['inceptiontime']
+CLASSIFIERS = ['mlp','lstmfcn','emn_cv','inceptiontime','rocket','rocket_tf']
 
-ITERATIONS = 1
+ITERATIONS = 3

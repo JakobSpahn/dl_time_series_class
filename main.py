@@ -1,10 +1,10 @@
 import os
 
+import argparse
 import numpy as np
 import sklearn
 
-from utils.utils import read_dataset
-from utils.utils import create_directory
+from utils.utils import read_dataset, create_directory, generate_results_csv
 from utils.constants import UCR_SELECTION
 from utils.constants import CLASSIFIERS
 from utils.constants import ITERATIONS
@@ -65,34 +65,52 @@ def create_classifier(classifier_name, input_shape, nb_classes, output_dir, tune
 
 root_dir = os.getcwd()
 print(root_dir)
+root_dir_copy = root_dir
 
+parser = argparse.ArgumentParser()
 
+parser.add_argument("-d", "--dataset_names", nargs='+', type=str, default=UCR_SELECTION)
+parser.add_argument("-c", "--classifier_names", nargs='+', type=str, default=CLASSIFIERS)
+parser.add_argument("-o", "--output_path", type= str, default=root_dir_copy)
+parser.add_argument("-i", "--iterations", type=int, default=ITERATIONS)
+parser.add_argument("-g", "--generate_results_csv", type=bool, default=False)
 
+arguments = parser.parse_args()
 
-for classifier_name in CLASSIFIERS:
-    print('classifier_name', classifier_name)
+if arguments.generate_results_csv:
+    print('Only generating results...')
+    res = generate_results_csv('results.csv', root_dir)
+    print(res.to_string())
 
-    for iter in range(ITERATIONS):
-        print('\t\titer', iter)
+else:
+    for classifier_name in arguments.classifier_names:
+        print('classifier_name', classifier_name)
 
-        trr = ''
-        if iter != 0:
-            trr = '_itr_' + str(iter)
+        for iter in range(arguments.iterations):
+            if classifier_name=='emn_cv' and iter>0:
+                continue
+                        
+            print('\t\titer', iter)
 
-        tmp_output_dir = root_dir + '/results/' + classifier_name + '/UCRArchive_2018/' + trr + '/'
+            trr = ''
+            if iter != 0:
+                trr = '_itr_' + str(iter)
 
-        for dataset_name in UCR_SELECTION:
-            print('\t\t\tdataset_name: ', dataset_name)
+            tmp_output_dir = arguments.output_path + '/results/' + classifier_name + '/UCRArchive_2018/' + trr + '/'
 
-            output_dir = tmp_output_dir + dataset_name + '/'
+            for dataset_name in arguments.dataset_names:
+                print('\t\t\tdataset_name: ', dataset_name)
 
-            create_directory(output_dir)
+                output_dir = tmp_output_dir + dataset_name + '/'
 
-            datasets_dict = read_dataset(root_dir, dataset_name)
+                create_directory(output_dir)
 
-            fit_classifier()
+                datasets_dict = read_dataset(root_dir, dataset_name)
 
-            print('\t\t\t\tDONE')
+                fit_classifier()
 
-            # the creation of this directory means
-            create_directory(output_dir + '/DONE')
+                print('\t\t\t\tDONE')
+
+                # the creation of this directory means
+                create_directory(output_dir + '/DONE')
+

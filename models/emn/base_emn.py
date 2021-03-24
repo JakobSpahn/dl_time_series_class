@@ -48,7 +48,7 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
             data_format='channels_first')(y_layer_1)
 
         concat_layer = keras.layers.concatenate([x_layer_1, y_layer_1])
-        #concat_layer = keras.layers.Dense(64, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
+        #concat_layer = keras.layers.Dense(128, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
         #concat_layer = keras.layers.Dense(128, kernel_initializer = 'lecun_uniform', activation = 'relu')(concat_layer)
         concat_layer = keras.layers.Dropout(0.25)(concat_layer)
 
@@ -68,7 +68,8 @@ class Base_Classifier_EMN(BaseEstimator, ClassifierMixin):
         return model
 
     def _reshape_shuffle(self, x_train, y_train, nb_samples, nb_classes, len_series):
-
+        #train_data = x_train.reshape(nb_samples, 1, len_series, self.res_units)
+        #train_labels = y_train.reshape(nb_samples, nb_classes)
         # Generate template for train data
         train_data = np.zeros((nb_samples, 1, len_series, self.res_units))
         train_labels = np.zeros((nb_samples, nb_classes))

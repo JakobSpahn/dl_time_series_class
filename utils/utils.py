@@ -18,6 +18,10 @@ from sklearn.metrics import recall_score
 
 import matplotlib.pyplot as plt
 
+from .constants import UCR_SELECTION
+from .constants import CLASSIFIERS
+from .constants import ITERATIONS
+
 def create_directory(directory_path):
     if os.path.exists(directory_path):
         return None
@@ -133,3 +137,42 @@ def plot_epochs_metric(hist, file_name, verbose, metric='loss'):
 
     plt.close()
 
+def generate_results_csv(output_file_name, root_dir):
+    root_dir += '/'
+    res = pd.DataFrame(data=np.zeros((0, 7), dtype=np.float), index=[],
+                       columns=['classifier_name', 'archive_name', 'dataset_name',
+                                'precision', 'accuracy', 'recall', 'duration'])
+    for classifier_name in CLASSIFIERS: 
+        archive_name = 'UCRArchive_2018'
+
+        for it in range(ITERATIONS):
+            if it != 0:
+                archive_name_dir = archive_name + '/_itr_' + str(it)
+            else:
+                archive_name_dir = archive_name
+                
+            for dataset_name in UCR_SELECTION:
+                if classifier_name == 'emn_cv':
+                    output_dir = root_dir + '/results/' + classifier_name + '/' + archive_name + '/' + dataset_name \
+                                    + '/' + 'df_metrics' + str(it) + '.csv' 
+                else:
+                    output_dir = root_dir + '/results/' + classifier_name + '/' \
+                                    + archive_name_dir + '/' + dataset_name + '/' + 'df_metrics.csv'
+                if not os.path.exists(output_dir):
+                    continue
+                df_metrics = pd.read_csv(output_dir)
+                df_metrics['classifier_name'] = classifier_name
+                df_metrics['archive_name'] = archive_name
+                df_metrics['dataset_name'] = dataset_name
+                res = pd.concat((res, df_metrics), axis=0, sort=False)
+                
+    
+    res.to_csv(root_dir + output_file_name, index=False)
+    
+    #Get the mean accuracies
+    res = pd.DataFrame({
+        'accuracy': res.groupby(
+        ['classifier_name', 'archive_name', 'dataset_name'])['accuracy'].mean()
+    }).reset_index()
+    
+    return res

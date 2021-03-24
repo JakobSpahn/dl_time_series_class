@@ -129,7 +129,10 @@ dmypy.json
 .pyre/
 
 #Ignore Results
-/results/
+!results/
+results/*
+!results/results.csv
+
 
 #Ignore UCR
 /UCRArchive_2018/
